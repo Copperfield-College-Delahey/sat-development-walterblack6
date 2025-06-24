@@ -25,13 +25,13 @@ while running:
 
     # Movement
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_a]:
         player_rect.x -= speed
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_d]:
         player_rect.x += speed
-    if keys[pygame.K_UP]:
+    if keys[pygame.K_w]:
         player_rect.y -= speed
-    if keys[pygame.K_DOWN]:
+    if keys[pygame.K_s]:
         player_rect.y += speed
 
     # Draw player
