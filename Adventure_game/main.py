@@ -27,7 +27,7 @@ while running:
     player.move(keys) #use players move method
 
     # Draw player
-    player.draw(screen)
+    player.draw(screen) #use players draw method
 
     # Update display
     pygame.display.flip()
