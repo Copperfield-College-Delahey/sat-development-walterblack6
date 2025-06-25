@@ -1,5 +1,6 @@
 import pygame
 import sys
+from player import Player #import player class
 
 # Initialize Pygame
 pygame.init()
@@ -10,9 +11,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Adventure Quest")
 
 # Set up player
-player_color = (0, 0, 255)
-player_rect = pygame.Rect(375, 275, 50, 50)
-speed = 1
+player = Player(375, 275) #create player instance
 
 # Game loop
 running = True
@@ -25,17 +24,10 @@ while running:
 
     # Movement
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_a]:
-        player_rect.x -= speed
-    if keys[pygame.K_d]:
-        player_rect.x += speed
-    if keys[pygame.K_w]:
-        player_rect.y -= speed
-    if keys[pygame.K_s]:
-        player_rect.y += speed
+    player.move(keys) #use players move method
 
     # Draw player
-    pygame.draw.rect(screen, player_color, player_rect)
+    player.draw(screen)
 
     # Update display
     pygame.display.flip()
