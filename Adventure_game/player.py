@@ -6,7 +6,7 @@ class Player:
         self.colour = (0, 0, 255)
         self.speed = 1
     
-    def move(self, keys):
+    def move(self, keys): #player move keys
         if keys[pygame.K_a]:
             self.rect.x -= self.speed
         if keys[pygame.K_d]:
