@@ -30,3 +30,10 @@ def draw_map(screen, tile_map: list[list[int]]) -> None: #list[list[int]] added 
                 colours[tile],  # Color based on tile type
                 pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)  # Position and size of the tile
             )
+
+def can_move(x, y):
+    tile_x = x // TILE_SIZE
+    tile_y = y // TILE_SIZE
+    if tile_map[tile_y][tile_x] == 1:
+        return False
+    return True

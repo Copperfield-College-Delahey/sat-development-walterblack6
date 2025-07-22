@@ -1,7 +1,7 @@
 import pygame
 import sys
 from player import Player #import player class
-
+from map import tile_map, draw_map
 # Initialize Pygame
 pygame.init()
 
@@ -22,12 +22,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+    #draw map
+    draw_map(screen, tile_map)
+    
     # Movement
     keys = pygame.key.get_pressed()
     player.move(keys) #use players move method
 
     # Draw player
     player.draw(screen) #use players draw method
+    
+   
 
     # Update display
     pygame.display.flip()
