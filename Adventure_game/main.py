@@ -3,6 +3,7 @@ import sys
 from player import Player  # import player class
 from map import tile_map, draw_map, get_tile
 from npc import NPC
+
 # Initialize Pygame
 pygame.init()
 
@@ -13,16 +14,19 @@ pygame.display.set_caption("Adventure Quest")
 
 def draw_textbox(screen, text):
     font = pygame.font.SysFont("Arial", 20)
-    pygame.draw.rect(screen, (0, 0, 0), (50, 500, 700, 80)) #draw textbox background
-    rendered = font.render(text, True, (255, 255, 255)) #render text
-    screen.pygame.Surface.blit(rendered, (60, 530)) #draw text in box
+    pygame.draw.rect(screen, (0, 0, 0), (50, 500, 700, 80))  # Draw textbox background
+    rendered = font.render(text, True, (255, 255, 255))      # Render text
+    screen.blit(rendered, (60, 530))                         # Draw text in box
 
 # Set up player
 player = Player(375, 275)  # create player instance
 
-npc1 = NPC(300, 200, "SHANE RILE TAN") # create npc instance
+npc1 = NPC(300, 100, "SHANE RYLE TAN") # create npc instance
 
-dialogue_message = "" # store message to display
+dialogue_message = ""  # store message to display
+message = ""
+npc_message_active = False  # track if NPC message is showing
+space_was_pressed = False   # track previous space state
 
 # Game loop
 running = True
@@ -38,31 +42,40 @@ while running:
 
     # Movement
     keys = pygame.key.get_pressed()
-    player.move(keys)  # use player's move method
+    player.move(keys)
 
     # Draw player
-    player.draw(screen)  # use player's draw method
-    
+    player.draw(screen)
+
     # Draw npc
     npc1.draw(screen)
-    
-    #npc interaction
-    if keys[pygame.K_SPACE]:
-        message = npc1.interact(player.rect)
-        if message:
-            dialogue_message = message  # Set message to display
-            
-    
+
+    # Toggle NPC message on space press (not hold)
+    if keys[pygame.K_SPACE] and not space_was_pressed:
+        if not npc_message_active:
+            npc_message = npc1.interact(player.rect)
+            if npc_message:
+                dialogue_message = npc_message
+                npc_message_active = True
+        else:
+            dialogue_message = ""
+            npc_message_active = False
+    space_was_pressed = keys[pygame.K_SPACE]
+
+    # Check tile under player and set message
+    tile_under_player = get_tile(player.rect.centerx, player.rect.centery)
+    if tile_under_player == 2:  # Chest
+        message = "You found a chest with a health potion!"
+    elif tile_under_player == 3:  # Goal
+        message = "You've reached the exit! Well done!"
+    else:
+        message = ""
+
     # Draw textbox if there's a message
     if dialogue_message:
         draw_textbox(screen, dialogue_message)
-
-    # Check tile under player
-    tile_under_player = get_tile(player.rect.centerx, player.rect.centery)
-    if tile_under_player == 2:  # chest
-        print("You found a chest!")
-    elif tile_under_player == 3:  # goal
-        print("You reached the goal!")
+    elif message:
+        draw_textbox(screen, message)
 
     # Update display
     pygame.display.flip()
