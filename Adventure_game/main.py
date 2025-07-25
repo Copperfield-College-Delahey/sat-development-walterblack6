@@ -11,6 +11,7 @@ pygame.init()
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Adventure Quest")
+is_fullscreen = False  # Track fullscreen state
 
 def draw_textbox(screen, text):
     font = pygame.font.SysFont("Arial", 20)
@@ -21,7 +22,7 @@ def draw_textbox(screen, text):
 # Set up player
 player = Player(375, 275)  # create player instance
 
-npc1 = NPC(300, 100, "SHANE RYLE TAN") # create npc instance
+npc1 = NPC(300, 100, "YOUR 5$ DOLLARS WAS PROMISED TO ME 6000 YEARS AGO") # create npc instance
 
 dialogue_message = ""  # store message to display
 message = ""
@@ -36,6 +37,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_F11:
+                is_fullscreen = not is_fullscreen
+                if is_fullscreen:
+                    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+                else:
+                    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # Draw map
     draw_map(screen, tile_map)

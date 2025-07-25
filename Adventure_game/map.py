@@ -1,3 +1,7 @@
+import pygame
+import os
+from typing import Dict, Tuple  # For type hints
+
 tile_map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -7,29 +11,40 @@ tile_map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
-import pygame
-from typing import Dict, Tuple  # For type hints
-
 TILE_SIZE = 64  # Size of each tile in pixels
 
+# Lazy-load sprites
+chest_img = None
+goal_img = None
+
 def draw_map(screen, tile_map: list[list[int]]) -> None:
-    # Define colors for each tile type: 0 = floor, 1 = wall, 2 = object, 3 = goal
+    global chest_img, goal_img
+    if chest_img is None or goal_img is None:
+        base_path = os.path.dirname(__file__)
+        chest_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "chest.png")).convert_alpha()
+        chest_img = pygame.transform.scale(chest_img, (TILE_SIZE, TILE_SIZE))
+        goal_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "goal.png")).convert_alpha()
+        goal_img = pygame.transform.scale(goal_img, (TILE_SIZE, TILE_SIZE))
+
     colours: Dict[int, Tuple[int, int, int]] = {
         0: (240, 240, 240), # floor
         1: (50, 50, 50),    # wall
-        2: (255, 215, 0),   # object (e.g., chest)
-        3: (0, 255, 0)      # goal
     }
     
     # Loop through each row and column in the tile map
     for y, row in enumerate(tile_map):
         for x, tile in enumerate(row):
-            # Draw a rectangle for each tile at the correct position and color
-            pygame.draw.rect(
-                screen,
-                colours[tile],  # Color based on tile type
-                pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)  # Position and size
-            )
+            pos = (x * TILE_SIZE, y * TILE_SIZE)
+            if tile == 2:
+                screen.blit(chest_img, pos)
+            elif tile == 3:
+                screen.blit(goal_img, pos)
+            else:
+                pygame.draw.rect(
+                    screen,
+                    colours.get(tile, (255, 0, 255)),  # fallback color for unknown tiles
+                    pygame.Rect(*pos, TILE_SIZE, TILE_SIZE)
+                )
 
 def can_move(x, y):
     tile_x = x // TILE_SIZE    #conver pixel x to tile index
