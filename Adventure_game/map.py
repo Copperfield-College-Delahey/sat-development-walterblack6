@@ -20,19 +20,23 @@ TILE_SIZE = 64  # Size of each tile in pixels
 # Lazy-load sprites
 chest_img = None
 goal_img = None
+floor_img = None
+wall_img = None
 
 def draw_map(screen, tile_map: list[list[int]]) -> None:
-    global chest_img, goal_img
-    if chest_img is None or goal_img is None:
+    global chest_img, goal_img, wall_img, floor_img
+    if chest_img is None or goal_img or wall_img or floor_img is None:
         base_path = os.path.dirname(__file__)
         chest_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "chest.png")).convert_alpha()
         chest_img = pygame.transform.scale(chest_img, (TILE_SIZE, TILE_SIZE))
         goal_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "goal.png")).convert_alpha()
         goal_img = pygame.transform.scale(goal_img, (TILE_SIZE, TILE_SIZE))
+        floor_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "floor.png")).convert_alpha()
+        floor_img = pygame.transform.scale(floor_img, (TILE_SIZE, TILE_SIZE))
+        wall_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "wall.png")).convert_alpha()
+        wall_img = pygame.transform.scale(wall_img, (TILE_SIZE, TILE_SIZE))
 
     colours: Dict[int, Tuple[int, int, int]] = {
-        0: (133, 133, 133), # floor
-        1: (50, 50, 50),    # wall
     }
     
     # Loop through each row and column in the tile map
@@ -43,6 +47,10 @@ def draw_map(screen, tile_map: list[list[int]]) -> None:
                 screen.blit(chest_img, pos)
             elif tile == 3:
                 screen.blit(goal_img, pos)
+            elif tile == 0:
+                screen.blit(floor_img, pos)
+            elif tile == 1:
+                screen.blit(wall_img, pos)
             else:
                 pygame.draw.rect(
                     screen,
