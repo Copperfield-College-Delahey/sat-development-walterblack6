@@ -20,12 +20,14 @@ def draw_textbox(screen, text):
     screen.blit(rendered, (60, 530))                         # Draw text in box
 
 # Set up player
-player = Player(375, 275)  # create player instance
+player = Player(375, 200)  # create player instance
 
-npc1 = NPC(300, 100, "YOUR 5$ DOLLARS WAS PROMISED TO ME 6000 YEARS AGO") # create npc instance
+npc1 = NPC(300, 75, "YOUR 5$ DOLLARS WAS PROMISED TO ME 6000 YEARS AGO") # create npc instance
 
-dialogue_message = ""  # store message to display
+# store message to display
+dialogue_message = "" 
 message = ""
+
 npc_message_active = False  # track if NPC message is showing
 space_was_pressed = False   # track previous space state
 

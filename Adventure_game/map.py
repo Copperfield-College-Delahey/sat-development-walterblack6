@@ -4,10 +4,14 @@ from typing import Dict, Tuple  # For type hints
 
 tile_map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-    [1, 0, 1, 0, 2, 0, 1, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 3, 1],
+    [1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 1, 1, 0, 1, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 1, 2, 1, 0, 1, 3, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
@@ -27,7 +31,7 @@ def draw_map(screen, tile_map: list[list[int]]) -> None:
         goal_img = pygame.transform.scale(goal_img, (TILE_SIZE, TILE_SIZE))
 
     colours: Dict[int, Tuple[int, int, int]] = {
-        0: (240, 240, 240), # floor
+        0: (133, 133, 133), # floor
         1: (50, 50, 50),    # wall
     }
     
@@ -46,12 +50,14 @@ def draw_map(screen, tile_map: list[list[int]]) -> None:
                     pygame.Rect(*pos, TILE_SIZE, TILE_SIZE)
                 )
 
-def can_move(x, y):
+def can_move(x: int, y:int) -> bool:
     tile_x = x // TILE_SIZE    #conver pixel x to tile index
     tile_y = y // TILE_SIZE #convert pixel y to tile index
-    if tile_map[tile_y][tile_x] == 1:
+    # Prevent out-of-bounds movement
+    if tile_y < 0 or tile_y >= len(tile_map) or tile_x < 0 or tile_x >= len(tile_map[0]):
         return False
-    return True
+    # Return False if wall, True otherwise
+    return tile_map[tile_y][tile_x] != 1
 
 def get_tile(x, y):
     return tile_map[y // TILE_SIZE][x // TILE_SIZE]

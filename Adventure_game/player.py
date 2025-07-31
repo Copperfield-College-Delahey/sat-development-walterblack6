@@ -2,6 +2,16 @@ import pygame
 from map import can_move  # Import can_move from map.py
 import os
 
+def can_move_rect(rect):
+    # Check all four corners of the rect
+    from map import can_move
+    return (
+        can_move(rect.left, rect.top) and
+        can_move(rect.right - 1, rect.top) and
+        can_move(rect.left, rect.bottom - 1) and
+        can_move(rect.right - 1, rect.bottom - 1)
+    )
+
 class Player:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 50, 50)
@@ -14,14 +24,23 @@ class Player:
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
 
     def move(self, keys): #player move keys
-        if keys[pygame.K_a] and can_move(self.rect.x - self.speed, self.rect.y):
-            self.rect.x -= self.speed
-        if keys[pygame.K_d] and can_move(self.rect.x + self.speed, self.rect.y):
-            self.rect.x += self.speed
-        if keys[pygame.K_w] and can_move(self.rect.x, self.rect.y - self.speed):
-            self.rect.y -= self.speed
-        if keys[pygame.K_s] and can_move(self.rect.x, self.rect.y + self.speed):
-            self.rect.y += self.speed
+        new_rect = self.rect.copy()
+        if keys[pygame.K_a]:
+            new_rect.x -= self.speed
+            if can_move_rect(new_rect):
+                self.rect.x -= self.speed
+        if keys[pygame.K_d]:
+            new_rect.x += self.speed
+            if can_move_rect(new_rect):
+                self.rect.x += self.speed
+        if keys[pygame.K_w]:
+            new_rect.y -= self.speed
+            if can_move_rect(new_rect):
+                self.rect.y -= self.speed
+        if keys[pygame.K_s]:
+            new_rect.y += self.speed
+            if can_move_rect(new_rect):
+                self.rect.y += self.speed
 
     def draw(self, screen):
         # Draw the sprite image instead of a rectangle

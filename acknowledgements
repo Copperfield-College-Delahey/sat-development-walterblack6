@@ -1,1 +1,5 @@
 list[list[int]] and Dict[int, Tuple[int, int, int]] were added by coplitot to draw_map in map.py to fix Type annotation not supported for this statement error
+
+goal and chest image loading was changed by coplitot to lazy loading to fix error
+
+Player movement collision was improved by Copilot: can_move_rect was added to player.py to check all four corners of the player rectangle before moving, preventing the player from entering walls even if the sprite is smaller than the wall
