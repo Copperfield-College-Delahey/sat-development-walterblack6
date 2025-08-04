@@ -15,7 +15,20 @@ tile_map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
+# Define colours for unknown tile types
+colours = {
+    4: (0, 255, 0),   # Example: green for tile type 4
+    5: (0, 0, 255),   # Example: blue for tile type 5
+    # Add more tile type colors as needed
+}
+
 TILE_SIZE = 64  # Size of each tile in pixels
+
+def load_sprite(filename):
+    base_path = os.path.dirname(__file__)
+    path = os.path.join(base_path, "assets", "sprites", filename)
+    img = pygame.image.load(path).convert_alpha()
+    return pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
 
 # Lazy-load sprites
 chest_img = None
@@ -25,20 +38,12 @@ wall_img = None
 
 def draw_map(screen, tile_map: list[list[int]]) -> None:
     global chest_img, goal_img, wall_img, floor_img
-    if chest_img is None or goal_img or wall_img or floor_img is None:
-        base_path = os.path.dirname(__file__)
-        chest_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "chest.png")).convert_alpha()
-        chest_img = pygame.transform.scale(chest_img, (TILE_SIZE, TILE_SIZE))
-        goal_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "goal.png")).convert_alpha()
-        goal_img = pygame.transform.scale(goal_img, (TILE_SIZE, TILE_SIZE))
-        floor_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "floor.png")).convert_alpha()
-        floor_img = pygame.transform.scale(floor_img, (TILE_SIZE, TILE_SIZE))
-        wall_img = pygame.image.load(os.path.join(base_path, "assets", "sprites", "wall.png")).convert_alpha()
-        wall_img = pygame.transform.scale(wall_img, (TILE_SIZE, TILE_SIZE))
+    if chest_img is None or goal_img is None or wall_img is None or floor_img is None:
+        chest_img = load_sprite("chest.png")
+        goal_img = load_sprite("goal.png")
+        floor_img = load_sprite("floor.png")
+        wall_img = load_sprite("wall.png")
 
-    colours: Dict[int, Tuple[int, int, int]] = {
-    }
-    
     # Loop through each row and column in the tile map
     for y, row in enumerate(tile_map):
         for x, tile in enumerate(row):

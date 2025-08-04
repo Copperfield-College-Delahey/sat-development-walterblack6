@@ -31,6 +31,15 @@ message = ""
 npc_message_active = False  # track if NPC message is showing
 space_was_pressed = False   # track previous space state
 
+paused = False  # Track pause state
+
+def draw_pause_menu(screen):
+    font = pygame.font.SysFont("Arial", 40)
+    text = font.render("Paused - Press ESC to resume", True, (255, 255, 255))
+    rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+    pygame.draw.rect(screen, (0, 0, 0), rect.inflate(40, 40))
+    screen.blit(text, rect)
+
 # Game loop
 running = True
 while running:
@@ -46,6 +55,13 @@ while running:
                     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
                 else:
                     screen = pygame.display.set_mode((WIDTH, HEIGHT))
+            elif event.key == pygame.K_ESCAPE:
+                paused = not paused
+
+    if paused:
+        draw_pause_menu(screen)
+        pygame.display.flip()
+        continue  # Skip game updates while paused
 
     # Draw map
     draw_map(screen, tile_map)

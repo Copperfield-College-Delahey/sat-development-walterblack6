@@ -7,16 +7,16 @@ def can_move_rect(rect):
     from map import can_move
     return (
         can_move(rect.left, rect.top) and
-        can_move(rect.right - 5, rect.top) and
-        can_move(rect.left, rect.bottom - 5) and
-        can_move(rect.right - 5, rect.bottom - 5)
+        can_move(rect.right - 1, rect.top) and
+        can_move(rect.left, rect.bottom - 1) and
+        can_move(rect.right - 1, rect.bottom - 1)
     )
 
 class Player:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 50, 50)
         self.colour = (0, 0, 255)
-        self.speed = 5
+        self.speed = 1
         # Load player sprite using absolute path
         base_path = os.path.dirname(__file__)
         sprite_path = os.path.join(base_path, "assets", "sprites", "player.png")
