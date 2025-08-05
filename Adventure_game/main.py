@@ -13,11 +13,32 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Adventure Quest")
 is_fullscreen = False  # Track fullscreen state
 
+paused = False
+
 def draw_textbox(screen, text):
     font = pygame.font.SysFont("Arial", 20)
     pygame.draw.rect(screen, (0, 0, 0), (50, 500, 700, 80))  # Draw textbox background
     rendered = font.render(text, True, (255, 255, 255))      # Render text
     screen.blit(rendered, (60, 530))                         # Draw text in box
+    
+def draw_text(text, font, text_col, x, y):
+    img = font.render(text, True, text_col)
+    screen.blit(img, (x, y))
+    
+def draw_paused_menu(screen):
+    font = pygame.font.SysFont("Arial", 40)
+    options = ["Resume", "Save", "Exit"]
+    
+    #draw semi transparent overlay
+    overlay = pygame.Surface((800, 600))
+    overlay.set_alpha(180)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+    
+    #draw each menu option 
+    for i, option in enumerate(options):
+        text = font.render(option, True, (255, 255, 255))
+        screen.blit(text, (300, 200 + i * 60))
 
 # Set up player
 player = Player(375, 200)  # create player instance
@@ -31,37 +52,31 @@ message = ""
 npc_message_active = False  # track if NPC message is showing
 space_was_pressed = False   # track previous space state
 
-paused = False  # Track pause state
-
-def draw_pause_menu(screen):
-    font = pygame.font.SysFont("Arial", 40)
-    text = font.render("Paused - Press ESC to resume", True, (255, 255, 255))
-    rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-    pygame.draw.rect(screen, (0, 0, 0), rect.inflate(40, 40))
-    screen.blit(text, rect)
-
 # Game loop
 running = True
 while running:
     screen.fill((255, 255, 255))  # Clear screen
+    
+    
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_F11:
+            if event.key == pygame.K_ESCAPE:
+                paused = not paused #toggle pause on/off
+            elif event.key == pygame.K_F11:
                 is_fullscreen = not is_fullscreen
                 if is_fullscreen:
                     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
                 else:
                     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-            elif event.key == pygame.K_ESCAPE:
-                paused = not paused
+
 
     if paused:
-        draw_pause_menu(screen)
+        draw_paused_menu(screen)
         pygame.display.flip()
-        continue  # Skip game updates while paused
+        continue #skip rest of loop while paused
 
     # Draw map
     draw_map(screen, tile_map)
@@ -87,6 +102,8 @@ while running:
             dialogue_message = ""
             npc_message_active = False
     space_was_pressed = keys[pygame.K_SPACE]
+    
+    
 
     # Check tile under player and set message
     tile_under_player = get_tile(player.rect.centerx, player.rect.centery)
