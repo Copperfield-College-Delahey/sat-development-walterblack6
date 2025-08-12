@@ -1,11 +1,10 @@
 import pygame
-from map import can_move  # Import can_move from map.py
 import os
 from inventory import Inventory
 from item import Item
 
 def can_move_rect(rect):
-    # Check all four corners of the rect
+    # Check all four corners of the rect using current map state
     from map import can_move
     return (
         can_move(rect.left, rect.top) and
@@ -13,6 +12,11 @@ def can_move_rect(rect):
         can_move(rect.left, rect.bottom - 1) and
         can_move(rect.right - 1, rect.bottom - 1)
     )
+
+def get_current_can_move():
+    """Get the current can_move function that uses the updated map"""
+    from map import can_move
+    return can_move
 
 class Player:
     def __init__(self, x, y):
@@ -99,22 +103,23 @@ class Player:
         # Check if player is alive
         return self.health > 0
     
-    def draw(self, screen):
+    def draw(self, screen, camera_x=0.0, camera_y=0.0):
         # Draw the sprite image instead of a rectangle
-        screen.blit(self.image, self.rect)
+        screen_pos = (self.rect.x - camera_x, self.rect.y - camera_y)
+        screen.blit(self.image, screen_pos)
         
         # Draw health bar
-        self.draw_health_bar(screen)
+        self.draw_health_bar(screen, camera_x, camera_y)
         
         # Draw inventory if open
         self.inventory.draw(screen)
     
-    def draw_health_bar(self, screen):
+    def draw_health_bar(self, screen, camera_x=0.0, camera_y=0.0):
         # Draw player health bar
         bar_width = 100
         bar_height = 10
-        x = self.rect.x - 25
-        y = self.rect.y - 20
+        x = self.rect.x - camera_x - 25
+        y = self.rect.y - camera_y - 20
         
         # Background
         pygame.draw.rect(screen, (100, 0, 0), (x, y, bar_width, bar_height))
@@ -151,3 +156,25 @@ class Player:
         self.health = data.get('health', self.max_health)
         self.max_health = data.get('max_health', self.max_health)
         self.inventory.load_from_dict(data.get('inventory', {}))
+    
+    def get_equipped_weapon(self):
+        """Get currently equipped weapon"""
+        return self.inventory.equipment.get("weapon")
+
+    def get_equipped_armor(self):
+        """Get currently equipped armor"""
+        return self.inventory.equipment.get("armor")
+
+    def get_total_defense(self):
+        """Calculate total defense including armor"""
+        base_defense = 0
+        armor = self.get_equipped_armor()
+        if armor:
+            # Different armor types could provide different defense values
+            if armor.name == "Leather Armor":
+                base_defense += 3
+            elif armor.name == "Iron Armor":
+                base_defense += 5
+            elif armor.name == "Steel Armor":
+                base_defense += 7
+        return base_defense

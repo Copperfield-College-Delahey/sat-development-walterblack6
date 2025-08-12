@@ -23,7 +23,7 @@ class Item:
                 print(f"Could not load image: {image_path}")
     
     def use(self, player):
-        #Use the item on the player
+        # Use the item on the player
         if self.item_type == "consumable":
             return self.use_consumable(player)
         elif self.item_type == "key":
@@ -31,20 +31,22 @@ class Item:
         return False
     
     def use_consumable(self, player):
-        #Use a consumable item (health potion, etc.)
+        # Use a consumable item (health potion, etc.)
         if self.name.lower() == "health potion":
             if hasattr(player, 'health'):
+                if player.health >= player.max_health:
+                    return False  # Can't use potion at full health
                 player.health = min(player.max_health, player.health + 20)
                 return True
         return False
     
     def use_key(self, player):
-        #Use a key item
+        # Use a key item
         # This would be implemented based on specific doors/chests
         return True
     
     def can_stack_with(self, other_item):
-        #Check if this item can stack with another item
+        # Check if this item can stack with another item
         return (self.stackable and 
                 other_item.stackable and 
                 self.name == other_item.name and 
@@ -102,4 +104,12 @@ def create_key():
     return Item("Old Key", "An old rusty key", "key", False, 1, "key.png")
 
 def create_armor():
-    return Item("Leather Armor", "Basic leather armor", "armor", False, 1, "armor.png")
+    # Updated armor creation with defense value
+    return Item("Leather Armor", "Basic leather armor (Defense +3)", "armor", False, 1, "armor.png")
+
+# Add more armor types if desired:
+def create_iron_armor():
+    return Item("Iron Armor", "Strong iron armor (Defense +5)", "armor", False, 1, "iron_armor.png")
+
+def create_steel_armor():
+    return Item("Steel Armor", "Powerful steel armor (Defense +7)", "armor", False, 1, "steel_armor.png")

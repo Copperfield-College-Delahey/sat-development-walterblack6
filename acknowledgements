@@ -5,3 +5,13 @@ goal and chest image loading was changed by coplitot to lazy loading to fix erro
 Player movement collision was improved by Copilot: can_move_rect was added to player.py to check all four corners of the player rectangle before moving, preventing the player from entering walls even if the sprite is smaller than the wall
 
 Image loading for map.py was changed to use a load_sprite helper function and lazy loading for chest, goal, floor, and wall tiles. by Copilot to fix player move speed
+
+NON-AI acknowledgements
+
+Youtube: https://www.youtube.com/watch?v=2iyx8_elcYg
+help to set up pause menu and buttons for it
+
+Youtube: https://www.youtube.com/watch?v=E4JjEuNi_k0, https://www.youtube.com/watch?v=Q5Qyk-05sc4, https://www.youtube.com/watch?v=UosdhJ1gYM0
+
+used as template for skeleton inventory and used to modify to make own inventory
+

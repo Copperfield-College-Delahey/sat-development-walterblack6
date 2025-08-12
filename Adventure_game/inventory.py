@@ -15,6 +15,17 @@ class Inventory:
         self.inventory_x = 50
         self.inventory_y = 100
         
+        # Equipment slots
+        self.equipment = {
+            "weapon": None,
+            "armor": None
+        }
+        
+        # Equipment window settings
+        self.equipment_x = self.inventory_x + (self.slots_per_row * (self.slot_size + self.padding)) + 50
+        self.equipment_width = 200
+        self.equipment_slot_size = 64
+    
     def add_item(self, item):
         #Add an item to the inventory
         if len(self.items) >= self.max_slots:
@@ -103,6 +114,33 @@ class Inventory:
         #Toggle inventory open/closed state
         self.is_open = not self.is_open
     
+    def equip_item(self, slot_index):
+        # Equip an item from inventory
+        if 0 <= slot_index < len(self.items):
+            item = self.items[slot_index]
+            if item.item_type in ["weapon", "armor"]:
+                # Unequip current item if any
+                current_equipped = self.equipment[item.item_type]
+                if current_equipped:
+                    self.items.append(current_equipped)
+                
+                # Equip new item
+                self.equipment[item.item_type] = item
+                self.items.pop(slot_index)
+                return True, f"Equipped {item.name}"
+        return False, "Cannot equip this item"
+
+    def unequip_item(self, equipment_type):
+        # Unequip an item and return it to inventory
+        if equipment_type in self.equipment and self.equipment[equipment_type]:
+            item = self.equipment[equipment_type]
+            if len(self.items) < self.max_slots:
+                self.items.append(item)
+                self.equipment[equipment_type] = None
+                return True, f"Unequipped {item.name}"
+            return False, "Inventory is full"
+        return False, "No item equipped"
+    
     def handle_input(self, event):
         #Handle input for inventory navigation
         if not self.is_open:
@@ -130,7 +168,30 @@ class Inventory:
             elif event.key == pygame.K_RETURN:
                 # Use selected item
                 return True
+            elif event.key == pygame.K_e:  # Add 'E' key to equip/unequip
+                if 0 <= self.selected_slot < len(self.items):
+                    item = self.items[self.selected_slot]
+                    if item.item_type in ["weapon", "armor"]:
+                        self.equip_item(self.selected_slot)
+                        return True
         
+        # Handle mouse clicks for equipment slots
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            # Check weapon slot click
+            weapon_rect = pygame.Rect(self.equipment_x + 20, self.inventory_y + 100, 
+                                    self.equipment_slot_size, self.equipment_slot_size)
+            if weapon_rect.collidepoint(mouse_pos):
+                self.unequip_item("weapon")
+                return True
+                
+            # Check armor slot click
+            armor_rect = pygame.Rect(self.equipment_x + 20, self.inventory_y + 200, 
+                                   self.equipment_slot_size, self.equipment_slot_size)
+            if armor_rect.collidepoint(mouse_pos):
+                self.unequip_item("armor")
+                return True
+    
         return False
     
     def draw(self, screen):
@@ -189,6 +250,30 @@ class Inventory:
         
         # Draw controls
         self.draw_controls(screen, self.inventory_x, self.inventory_y + inventory_height + 80)
+        
+        # Draw equipment window
+        pygame.draw.rect(screen, (50, 50, 50), 
+                        (self.equipment_x, self.inventory_y, 
+                         self.equipment_width, inventory_height))
+        pygame.draw.rect(screen, (100, 100, 100), 
+                        (self.equipment_x, self.inventory_y, 
+                         self.equipment_width, inventory_height), 3)
+        
+        # Draw equipment title
+        font = pygame.font.SysFont("Arial", 24, bold=True)
+        title = font.render("EQUIPMENT", True, (255, 255, 255))
+        title_rect = title.get_rect(center=(self.equipment_x + self.equipment_width // 2, 
+                                          self.inventory_y + 20))
+        screen.blit(title, title_rect)
+        
+        # Draw equipment slots
+        self.draw_equipment_slot(screen, "weapon", self.equipment_x + 20, self.inventory_y + 100)
+        self.draw_equipment_slot(screen, "armor", self.equipment_x + 20, self.inventory_y + 200)
+        
+        # Draw equipment controls hint
+        font = pygame.font.SysFont("Arial", 14)
+        hint = font.render("Press E to equip/Click to unequip", True, (150, 150, 150))
+        screen.blit(hint, (self.equipment_x + 10, self.inventory_y + inventory_height - 30))
     
     def draw_item_info(self, screen, item, x, y):
         #Draw detailed information about the selected item
@@ -218,6 +303,27 @@ class Inventory:
         for i, control in enumerate(controls):
             text = font.render(control, True, (150, 150, 150))
             screen.blit(text, (x, y + i * 20))
+    
+    def draw_equipment_slot(self, screen, slot_type, x, y):
+        # Draw slot background
+        pygame.draw.rect(screen, (60, 60, 60), 
+                        (x, y, self.equipment_slot_size, self.equipment_slot_size))
+        pygame.draw.rect(screen, (120, 120, 120), 
+                        (x, y, self.equipment_slot_size, self.equipment_slot_size), 2)
+        
+        # Draw slot label
+        font = pygame.font.SysFont("Arial", 16)
+        label = font.render(slot_type.title(), True, (200, 200, 200))
+        screen.blit(label, (x, y - 25))
+        
+        # Draw equipped item if any
+        if self.equipment[slot_type]:
+            item = self.equipment[slot_type]
+            item.draw(screen, x + 16, y + 16, 32)
+            
+            # Draw item name
+            name = font.render(item.name, True, (255, 255, 255))
+            screen.blit(name, (x + self.equipment_slot_size + 10, y + 20))
     
     def save_to_dict(self):
         #Convert inventory to dictionary for saving

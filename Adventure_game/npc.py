@@ -6,7 +6,6 @@ class NPC:
         self.rect = pygame.Rect(x, y, 40, 40)
         self.dialogue = dialogue
         self.spoken = False
-        # Load NPC sprite using absolute path
         base_path = os.path.dirname(__file__)
         sprite_path = os.path.join(base_path, "assets", "sprites", "npc.png")
         self.image = pygame.image.load(sprite_path).convert_alpha()
@@ -18,5 +17,6 @@ class NPC:
             return self.dialogue
         return None
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, camera_x=0.0, camera_y=0.0):
+        screen_pos = (self.rect.x - camera_x, self.rect.y - camera_y)
+        screen.blit(self.image, screen_pos) 
