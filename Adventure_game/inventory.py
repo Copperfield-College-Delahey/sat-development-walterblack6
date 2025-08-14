@@ -9,10 +9,10 @@ class Inventory:
         self.is_open = False
         
         # UI settings
-        self.slot_size = 50
-        self.slots_per_row = 5
-        self.padding = 10
-        self.inventory_x = 50
+        self.slot_size = 60  # Increased from 50
+        self.slots_per_row = 8  # Increased from 5
+        self.padding = 15  # Increased from 10
+        self.inventory_x = 100  # Adjusted position
         self.inventory_y = 100
         
         # Equipment slots
@@ -22,10 +22,10 @@ class Inventory:
         }
         
         # Equipment window settings
+        self.equipment_width = 300  # Increased from 200
+        self.equipment_slot_size = 80  # Increased from 64
         self.equipment_x = self.inventory_x + (self.slots_per_row * (self.slot_size + self.padding)) + 50
-        self.equipment_width = 200
-        self.equipment_slot_size = 64
-    
+
     def add_item(self, item):
         #Add an item to the inventory
         if len(self.items) >= self.max_slots:
@@ -199,19 +199,21 @@ class Inventory:
         if not self.is_open:
             return
         
-        # Draw background
+        # Calculate new dimensions
         inventory_width = self.slots_per_row * self.slot_size + (self.slots_per_row + 1) * self.padding
         inventory_height = ((self.max_slots - 1) // self.slots_per_row + 1) * self.slot_size + ((self.max_slots - 1) // self.slots_per_row + 2) * self.padding + 100
         
-        # Semi-transparent background
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()))
+        # Full screen overlay
+        overlay = pygame.Surface((1500, 1000))
         overlay.set_alpha(128)
         overlay.fill((0, 0, 0))
         screen.blit(overlay, (0, 0))
         
-        # Inventory background
-        pygame.draw.rect(screen, (50, 50, 50), (self.inventory_x, self.inventory_y, inventory_width, inventory_height))
-        pygame.draw.rect(screen, (100, 100, 100), (self.inventory_x, self.inventory_y, inventory_width, inventory_height), 3)
+        # Draw inventory background
+        pygame.draw.rect(screen, (50, 50, 50), 
+                        (self.inventory_x, self.inventory_y, inventory_width, inventory_height))
+        pygame.draw.rect(screen, (100, 100, 100), 
+                        (self.inventory_x, self.inventory_y, inventory_width, inventory_height), 3)
         
         # Draw title
         font = pygame.font.SysFont("Arial", 24, bold=True)

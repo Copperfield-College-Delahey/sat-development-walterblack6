@@ -14,24 +14,24 @@ BOSS_ROOM_HEIGHT = 6
 opened_chests = set()
 
 def is_chest_opened(x, y):
-    """Check if a chest at the given position has been opened"""
+    #Check if a chest at the given position has been opened
     return (x, y) in opened_chests
 
 def mark_chest_opened(x, y):
-    """Mark a chest as opened"""
+    #Mark a chest as opened
     opened_chests.add((x, y))
 
 def reset_chests():
-    """Reset all chests to unopened state"""
+    #Reset all chests to unopened state
     opened_chests.clear()
 
 def generate_maze(width, height):
-    """Generate a random maze using a simple algorithm"""
+    #Generate a random maze using a simple algorithm
     # Initialize maze with walls
     maze = [[1 for _ in range(width)] for _ in range(height)]
     
     def carve_path(x, y):
-        """Recursively carve paths through the maze"""
+        #Recursively carve paths through the maze
         maze[y][x] = 0
         
         # Define directions: up, right, down, left
@@ -61,7 +61,7 @@ def generate_maze(width, height):
     return maze
 
 def add_chests_to_maze(maze, num_chests=15):
-    """Add chests to random floor tiles in the maze"""
+    #Add chests to random floor tiles in the maze
     floor_positions = []
     
     # Find all floor positions
@@ -79,7 +79,7 @@ def add_chests_to_maze(maze, num_chests=15):
     return maze
 
 def create_boss_room(maze):
-    """Add a boss room at the end of the maze"""
+    #Add a boss room at the end of the maze#
     # Find the rightmost floor tile to place the boss room entrance
     entrance_x = 0
     entrance_y = 0
@@ -119,7 +119,7 @@ def create_boss_room(maze):
     return maze
 
 def generate_map():
-    """Generate a complete random map with maze, chests, and boss room"""
+    #Generate a complete random map with maze, chests, and boss room
     # Generate the main maze
     maze = generate_maze(MAP_WIDTH, MAP_HEIGHT)
     
@@ -155,10 +155,11 @@ goal_img = None
 floor_img = None
 wall_img = None
 boss_img = None
+boss_floor_img = None  # Add this line
 
 # Draw the map with camera offset
 def draw_map(screen, tile_map_param: list[list[int]] | None = None, camera_x: float = 0, camera_y: float = 0) -> None:
-    global chest_img, goal_img, wall_img, floor_img, boss_img, tile_map
+    global chest_img, goal_img, wall_img, floor_img, boss_img, boss_floor_img, tile_map
     
     # Use the global tile_map if no parameter is provided
     if tile_map_param is None:
@@ -174,8 +175,13 @@ def draw_map(screen, tile_map_param: list[list[int]] | None = None, camera_x: fl
             boss_img = load_sprite("boss.png")
         except:
             boss_img = None
+    if boss_floor_img is None:
+        try:
+            boss_floor_img = load_sprite("boss_floor.png")
+        except:
+            boss_floor_img = None
 
-    # Loop through each row and column in the tile map
+    # tile drawing section
     for y, row in enumerate(tile_map_param):
         for x, tile in enumerate(row):
             pos = (x * TILE_SIZE - int(camera_x), y * TILE_SIZE - int(camera_y))
@@ -188,14 +194,17 @@ def draw_map(screen, tile_map_param: list[list[int]] | None = None, camera_x: fl
             elif tile == 1:
                 screen.blit(wall_img, pos)
             elif tile == 4:
-                pygame.draw.rect(screen, colours[4], pygame.Rect(*pos, TILE_SIZE, TILE_SIZE))
+                if boss_floor_img:
+                    screen.blit(boss_floor_img, pos)
+                else:
+                    pygame.draw.rect(screen, colours[4], pygame.Rect(*pos, TILE_SIZE, TILE_SIZE))
             elif tile == 5:
                 if boss_img:
                     screen.blit(boss_img, pos)
                 else:
                     pygame.draw.rect(screen, colours[5], pygame.Rect(*pos, TILE_SIZE, TILE_SIZE))
-            elif tile == 6:
-                pygame.draw.rect(screen, colours[6], pygame.Rect(*pos, TILE_SIZE, TILE_SIZE))
+            elif tile == 6:  # Final goal
+                screen.blit(goal_img, pos)  # Use goal sprite instead of green rectangle
             else:
                 pygame.draw.rect(
                     screen,
@@ -221,7 +230,7 @@ def get_tile(x, y):
     return tile_map[y // TILE_SIZE][x // TILE_SIZE]
 
 def regenerate_map():
-    """Generate a new random map"""
+    #Generate a new random map
     global tile_map, chest_img, goal_img, floor_img, wall_img, boss_img
     tile_map = generate_map()
     reset_chests()
@@ -238,7 +247,7 @@ def regenerate_map():
     print(f"Starting area tile: {tile_map[1][1]}")  # Debug: check if starting area is clear
 
 def validate_player_position(player_x, player_y):
-    """Validate that the player position is valid on the current map"""
+    #Validate that the player position is valid on the current map
     global tile_map
     tile_x = player_x // TILE_SIZE
     tile_y = player_y // TILE_SIZE
@@ -252,7 +261,7 @@ def validate_player_position(player_x, player_y):
     return tile_type != 1
 
 def debug_collision(x, y):
-    """Debug function to check collision at a specific position"""
+    #Debug function to check collision at a specific position
     global tile_map
     tile_x = x // TILE_SIZE
     tile_y = y // TILE_SIZE
@@ -260,7 +269,7 @@ def debug_collision(x, y):
     return can_move(x, y)
 
 def get_random_item():
-    """Return a random item for chest contents"""
+    #Return a random item for chest contents
     items = [
         create_health_potion,
         create_sword,

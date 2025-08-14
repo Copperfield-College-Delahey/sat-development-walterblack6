@@ -21,8 +21,9 @@ def get_current_can_move():
 class Player:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 50, 50)
+        self.last_update = pygame.time.get_ticks() / 1000.0
         self.colour = (0, 0, 255)
-        self.speed = 1
+        self.base_speed = 300  # Pixels per second
         
         # Health system
         self.max_health = 100
@@ -37,24 +38,51 @@ class Player:
         self.image = pygame.image.load(sprite_path).convert_alpha()
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
 
-    def move(self, keys): #player move keys
-        new_rect = self.rect.copy()
+        self.x = float(x)  # Store actual position as float
+        self.y = float(y)
+        self.last_update = pygame.time.get_ticks() / 1000.0
+
+    def move(self, keys):
+        # Get time since last frame in seconds
+        dt = pygame.time.get_ticks() / 1000.0 - self.last_update
+        self.last_update = pygame.time.get_ticks() / 1000.0
+        
+        # Calculate movement vector
+        dx = 0.0
+        dy = 0.0
         if keys[pygame.K_a]:
-            new_rect.x -= self.speed
-            if can_move_rect(new_rect):
-                self.rect.x -= self.speed
+            dx -= self.base_speed * dt
         if keys[pygame.K_d]:
-            new_rect.x += self.speed
-            if can_move_rect(new_rect):
-                self.rect.x += self.speed
+            dx += self.base_speed * dt
         if keys[pygame.K_w]:
-            new_rect.y -= self.speed
-            if can_move_rect(new_rect):
-                self.rect.y -= self.speed
+            dy -= self.base_speed * dt
         if keys[pygame.K_s]:
-            new_rect.y += self.speed
+            dy += self.base_speed * dt
+
+        # Normalize diagonal movement
+        if dx != 0 and dy != 0:
+            dx *= 0.707  # 1/√2
+            dy *= 0.707
+
+        # Store potential new position
+        new_x = self.x + dx
+        new_y = self.y + dy
+
+        # Check horizontal movement
+        if dx != 0:
+            new_rect = self.rect.copy()
+            new_rect.x = int(new_x)
             if can_move_rect(new_rect):
-                self.rect.y += self.speed
+                self.x = new_x
+                self.rect.x = int(self.x)
+
+        # Check vertical movement
+        if dy != 0:
+            new_rect = self.rect.copy()
+            new_rect.y = int(new_y)
+            if can_move_rect(new_rect):
+                self.y = new_y
+                self.rect.y = int(self.y)
 
     def handle_input(self, event):
         # Handle player input including inventory

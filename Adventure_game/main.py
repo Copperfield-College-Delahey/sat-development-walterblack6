@@ -11,7 +11,7 @@ from combat import CombatSystem, Enemy
 pygame.init()
 
 # Set up screen
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1500, 1000
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Adventure Quest")
 is_fullscreen = False  # Track fullscreen state
@@ -25,9 +25,10 @@ camera_y = 0
 
 def draw_textbox(screen, text):
     font = pygame.font.SysFont("Arial", 20)
-    pygame.draw.rect(screen, (0, 0, 0), (50, 500, 700, 80))  # Draw textbox background
+    # Adjust textbox size and position for 1500x1000 window
+    pygame.draw.rect(screen, (0, 0, 0), (350, 800, 800, 80))  # Draw textbox background
     rendered = font.render(text, True, (255, 255, 255))      # Render text
-    screen.blit(rendered, (60, 530))                         # Draw text in box
+    screen.blit(rendered, (360, 830))                        # Draw text in box
     
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
@@ -60,13 +61,19 @@ def update_camera(player_x, player_y):
 
 
 def draw_paused_menu(screen):
-    #draw semi transparent overlay
-    overlay = pygame.Surface((800, 600))
+    # Draw semi transparent overlay for full window
+    overlay = pygame.Surface((1500, 1000))
     overlay.set_alpha(180)
     overlay.fill((0, 0, 0))
     screen.blit(overlay, (0, 0))
     
-    #draw each button
+    # Draw pause menu title
+    font = pygame.font.SysFont("Arial", 48, bold=True)
+    title = font.render("PAUSED", True, (255, 255, 255))
+    title_rect = title.get_rect(center=(750, 300))
+    screen.blit(title, title_rect)
+    
+    # Draw each button
     resume_button.draw(screen)
     save_button.draw(screen)
     inventory_button.draw(screen)
@@ -77,11 +84,11 @@ player = Player(192, 192)  # create player instance
 
 npc1 = NPC(320, 320, "Welcome to the Random Dungeon! Explore the maze, find chests, defeat the boss, and reach the final goal! Press Ctrl+R to generate a new map.") # create npc instance
 
-# Create pause menu buttons
-resume_button = Button(300, 200, 200, 50, "Resume")
-save_button = Button(300, 260, 200, 50, "Save")
-inventory_button = Button(300, 320, 200, 50, "Inventory")
-exit_button = Button(300, 380, 200, 50, "Exit")
+# Create pause menu buttons - centered in 1500x1000 window
+resume_button = Button(650, 400, 200, 50, "Resume")
+save_button = Button(650, 460, 200, 50, "Save")
+inventory_button = Button(650, 520, 200, 50, "Inventory")
+exit_button = Button(650, 580, 200, 50, "Exit")
 
 # store message to display
 dialogue_message = "" 
@@ -97,13 +104,19 @@ chest_message = ""
 chest_message_active = False
 last_e_state = False
 
-# Add combat system variable
+# Combat system variables
 combat_system = None
+last_key_time = 0
+KEY_REPEAT_INTERVAL = 150  # milliseconds between key repeats
 
 # Add some test items to player inventory
 player.add_item(create_health_potion())
 player.add_item(create_sword())
 player.add_item(create_key())
+
+# Add near the top with other initializations
+clock = pygame.time.Clock()
+FPS = 50  # Target frames per second
 
 # Game loop
 running = True
@@ -315,33 +328,80 @@ while running:
         # Draw combat UI
         combat_system.draw_combat_ui(screen)
         
+        # Handle victory screen
+        if combat_system.victory_screen:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_SPACE] and combat_system.victory_timer > 60:  # 1 second delay
+                combat_system = None  # Close combat system
+                player.rect.x -= 64  # Move player away from boss
+            else:
+                combat_system.victory_timer += 1
+            pygame.display.flip()  # Update display during victory screen
+            continue  # Skip rest of loop during victory screen
+        
         # Handle combat input only if combat is still active
         if combat_system.combat_active:
             mouse_pos = pygame.mouse.get_pos()
             mouse_click = pygame.mouse.get_pressed()[0]
+            current_time = pygame.time.get_ticks()
             
-            # Only handle input during player's turn
-            if combat_system.is_player_turn:
-                # Check for button clicks
+            if combat_system.show_item_menu:
+                # Handle item menu input
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_ESCAPE]:
+                    combat_system.show_item_menu = False
+                elif keys[pygame.K_RETURN]:
+                    if combat_system.selected_item_index < len(player.inventory.items):
+                        combat_system.process_turn("item", combat_system.selected_item_index)
+                        combat_system.show_item_menu = False
+                
+                # Handle repeating arrow key navigation
+                if current_time - last_key_time > KEY_REPEAT_INTERVAL:
+                    if keys[pygame.K_LEFT]:
+                        combat_system.selected_item_index = max(0, combat_system.selected_item_index - 1)
+                        last_key_time = current_time
+                    elif keys[pygame.K_RIGHT]:
+                        combat_system.selected_item_index = min(len(player.inventory.items) - 1, 
+                                                            combat_system.selected_item_index + 1)
+                        last_key_time = current_time
+            
+            # Only handle combat buttons during player's turn and when item menu is not shown
+            elif combat_system.is_player_turn:
                 if mouse_click:
-                    if 100 <= mouse_pos[0] <= 200 and 450 <= mouse_pos[1] <= 490:
-                        # Process player's attack turn
+                    # Calculate button positions (must match _draw_action_buttons)
+                    button_width = 200
+                    button_height = 60
+                    button_spacing = 50
+                    total_width = (button_width * 3) + (button_spacing * 2)
+                    start_x = combat_system.combat_x + (combat_system.combat_width - total_width) // 2
+                    button_y = combat_system.combat_y + combat_system.combat_height - 100
+                    
+                    # Attack button
+                    if (start_x <= mouse_pos[0] <= start_x + button_width and 
+                        button_y <= mouse_pos[1] <= button_y + button_height):
                         combat_system.process_turn("attack")
-                    elif 220 <= mouse_pos[0] <= 320 and 450 <= mouse_pos[1] <= 490:
-                        # Open inventory for item selection
-                        inventory_open = True
-                    elif 340 <= mouse_pos[0] <= 440 and 450 <= mouse_pos[1] <= 490:
-                        # Try to run from combat
+                        pygame.time.delay(500)
+                        if combat_system.combat_active:
+                            combat_system.process_turn("enemy")
+                    
+                    # Use Item button
+                    elif (start_x + button_width + button_spacing <= mouse_pos[0] <= start_x + button_width * 2 + button_spacing and 
+                          button_y <= mouse_pos[1] <= button_y + button_height):
+                        combat_system.show_item_menu = True
+                        combat_system.selected_item_index = 0
+                    
+                    # Run button
+                    elif (start_x + (button_width + button_spacing) * 2 <= mouse_pos[0] <= start_x + button_width * 3 + button_spacing * 2 and 
+                          button_y <= mouse_pos[1] <= button_y + button_height):
                         combat_system = None
                         player.rect.x -= 64  # Move player away from boss
-            else:
-                # Process enemy turn after a delay
-                pygame.time.wait(500)  # Wait 500ms before enemy attacks
+            elif not combat_system.is_player_turn:
+                # Process enemy turn
+                pygame.time.delay(500)
                 combat_system.process_turn("enemy")
         else:
             # Combat is over, reset combat system
-            if not combat_system.enemy.is_alive():
-                combat_system = None
+            combat_system = None
     else:
         # Clear chest message when walking off chest
         chest_message = ""
@@ -363,6 +423,8 @@ while running:
 
     # Update display
     pygame.display.flip()
+    
+    clock.tick(FPS)  # Limit frame rate
 
 # Quit
 pygame.quit()

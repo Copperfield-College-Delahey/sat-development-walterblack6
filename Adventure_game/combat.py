@@ -10,7 +10,25 @@ class CombatSystem:
         self.combat_active = True
         self.message = ""
         self.selected_item = None
+        # New variables for item menu
+        self.show_item_menu = False
+        self.selected_item_index = 0
+        self.items_per_row = 5
+        self.item_slot_size = 50
+        self.item_padding = 10
         
+        # Victory screen variables
+        self.victory_screen = False
+        self.victory_timer = 0
+        self.VICTORY_DURATION = 180  # 3 seconds at 60 FPS
+
+        # Combat UI dimensions
+        self.combat_width = 1200
+        self.combat_height = 800
+        self.combat_x = (1500 - self.combat_width) // 2
+        self.combat_y = (1000 - self.combat_height) // 2
+        self.message_y = self.combat_y + 250  # New position for combat messages
+    
     def start_combat(self) -> None:
         # Initialize combat state
         self.combat_active = True
@@ -88,10 +106,12 @@ class CombatSystem:
                 # Check if enemy is defeated after player's attack
                 if not self.enemy.is_alive():
                     self.combat_active = False
+                    self.victory_screen = True
+                    self.victory_timer = 0
                     self.message = "Victory! Enemy defeated!"
-                    return False
+                    return True  # Keep combat system active for victory screen
                 
-                # Switch to enemy turn
+                # Switch to enemy turn if enemy is still alive
                 self.is_player_turn = False
                 
             elif action == "item" and item_index is not None:
@@ -102,7 +122,7 @@ class CombatSystem:
                 
                 # Switch to enemy turn after successful item use
                 self.is_player_turn = False
-            
+        
         return True
     
     def draw_equipment_info(self, screen: pygame.Surface, x: int, y: int) -> None:
@@ -130,32 +150,155 @@ class CombatSystem:
 
     def draw_combat_ui(self, screen: pygame.Surface) -> None:
         # Draw the combat interface
-        # Draw semi-transparent overlay
-        overlay = pygame.Surface((800, 600))
+        # Draw semi-transparent overlay for full window
+        overlay = pygame.Surface((1500, 1000))
         overlay.set_alpha(128)
         overlay.fill((0, 0, 0))
         screen.blit(overlay, (0, 0))
         
-        # Draw combat box
-        pygame.draw.rect(screen, (50, 50, 50), (50, 50, 700, 500))
-        pygame.draw.rect(screen, (200, 200, 200), (50, 50, 700, 500), 2)
+        # Draw combat box - centered and larger
+        pygame.draw.rect(screen, (50, 50, 50), 
+                        (self.combat_x, self.combat_y, self.combat_width, self.combat_height))
+        pygame.draw.rect(screen, (200, 200, 200), 
+                        (self.combat_x, self.combat_y, self.combat_width, self.combat_height), 2)
         
         # Draw health bars
-        self._draw_health_bar(screen, 100, 100, self.player.health, self.player.max_health, "Player")
-        self._draw_health_bar(screen, 100, 150, self.enemy.health, self.enemy.max_health, "Enemy")
-        
-        # Draw message
-        font = pygame.font.SysFont("Arial", 24)
-        msg_surface = font.render(self.message, True, (255, 255, 255))
-        screen.blit(msg_surface, (100, 400))
-        
-        # Draw action buttons if it's player's turn
-        if self.is_player_turn:
-            self._draw_action_buttons(screen)
+        self._draw_health_bar(screen, self.combat_x + 50, self.combat_y + 50, 
+                             self.player.health, self.player.max_health, "Player")
+        self._draw_health_bar(screen, self.combat_x + 50, self.combat_y + 100, 
+                             self.enemy.health, self.enemy.max_health, "Enemy")
         
         # Draw equipment info
-        self.draw_equipment_info(screen, 100, 200)
+        self.draw_equipment_info(screen, self.combat_x + 50, self.combat_y + 150)
+        
+        # Draw combat message in center area
+        font = pygame.font.SysFont("Arial", 28, bold=True)
+        messages = self.message.split('\n')
+        for i, msg in enumerate(messages):
+            msg_surface = font.render(msg, True, (255, 255, 255))
+            msg_rect = msg_surface.get_rect(center=(self.combat_x + self.combat_width // 2, 
+                                                  self.message_y + i * 40))
+            screen.blit(msg_surface, msg_rect)
+        
+        # Draw item menu or action buttons
+        if self.show_item_menu:
+            self.draw_item_menu(screen)
+        elif self.is_player_turn:
+            self._draw_action_buttons(screen)
+        
+        # Draw victory screen if active
+        if self.victory_screen:
+            self.draw_victory_screen(screen)
     
+    def draw_item_menu(self, screen: pygame.Surface) -> None:
+        # Adjust item menu size and position
+        menu_width = 800  # Increased from 500
+        menu_height = 400  # Increased from 250
+        menu_x = (1500 - menu_width) // 2
+        menu_y = (1000 - menu_height) // 2
+        
+        # Draw semi-transparent overlay for item menu
+        pygame.draw.rect(screen, (40, 40, 40), (menu_x, menu_y, menu_width, menu_height))
+        pygame.draw.rect(screen, (200, 200, 200), (menu_x, menu_y, menu_width, menu_height), 2)
+        
+        # Draw title
+        font = pygame.font.SysFont("Arial", 24, bold=True)
+        title = font.render("Select Item to Use", True, (255, 255, 255))
+        title_rect = title.get_rect(center=(menu_x + menu_width // 2, menu_y + 25))
+        screen.blit(title, title_rect)
+        
+        # Draw item slots
+        items = self.player.inventory.items
+        for i, item in enumerate(items):
+            row = i // self.items_per_row
+            col = i % self.items_per_row
+            
+            x = menu_x + self.item_padding + col * (self.item_slot_size + self.item_padding)
+            y = menu_y + 60 + row * (self.item_slot_size + self.item_padding)
+            
+            # Draw slot background
+            slot_color = (80, 80, 80) if i == self.selected_item_index else (60, 60, 60)
+            pygame.draw.rect(screen, slot_color, (x, y, self.item_slot_size, self.item_slot_size))
+            pygame.draw.rect(screen, (120, 120, 120), (x, y, self.item_slot_size, self.item_slot_size), 2)
+            
+            # Draw item
+            item.draw(screen, x + 9, y + 9, 32)
+            
+            # Draw quantity if stackable
+            if item.stackable and item.quantity > 1:
+                small_font = pygame.font.SysFont("Arial", 12, bold=True)
+                quantity_text = small_font.render(str(item.quantity), True, (255, 255, 255))
+                screen.blit(quantity_text, (x + self.item_slot_size - 15, y + 5))
+        
+        # Draw selected item info
+        if items and 0 <= self.selected_item_index < len(items):
+            item = items[self.selected_item_index]
+            font = pygame.font.SysFont("Arial", 16)
+            name_text = font.render(item.name, True, (255, 255, 255))
+            desc_text = font.render(item.description, True, (200, 200, 200))
+            screen.blit(name_text, (menu_x + 10, menu_y + menu_height - 50))
+            screen.blit(desc_text, (menu_x + 10, menu_y + menu_height - 30))
+        
+        # Draw controls hint
+        hint_font = pygame.font.SysFont("Arial", 14)
+        hint_text = hint_font.render("Arrow keys to select, Enter to use, Esc to cancel", True, (150, 150, 150))
+        screen.blit(hint_text, (menu_x + 10, menu_y + menu_height - 20))
+
+    def draw_victory_screen(self, screen: pygame.Surface) -> None:
+        # Draw semi-transparent dark overlay for full window
+        overlay = pygame.Surface((1500, 1000))
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        
+        # Create a victory box
+        victory_width = 800
+        victory_height = 500
+        victory_x = (1500 - victory_width) // 2
+        victory_y = (1000 - victory_height) // 2
+        
+        # Draw victory box with border
+        pygame.draw.rect(screen, (50, 50, 50), (victory_x, victory_y, victory_width, victory_height))
+        pygame.draw.rect(screen, (255, 215, 0), (victory_x, victory_y, victory_width, victory_height), 3)
+        
+        # Draw victory banner
+        font = pygame.font.SysFont("Arial", 72, bold=True)
+        title = font.render("VICTORY!", True, (255, 215, 0))  # Gold color
+        title_rect = title.get_rect(center=(750, victory_y + 80))
+        screen.blit(title, title_rect)
+        
+        # Draw boss defeated message
+        font = pygame.font.SysFont("Arial", 36)
+        msg = font.render(f"You have defeated the {self.enemy.name}!", True, (255, 255, 255))
+        msg_rect = msg.get_rect(center=(750, victory_y + 180))
+        screen.blit(msg, msg_rect)
+        
+        # Draw battle stats
+        font = pygame.font.SysFont("Arial", 24)
+        stats = [
+            f"Your remaining health: {self.player.health}/{self.player.max_health}",
+            f"Equipped weapon: {self.player.get_equipped_weapon().name if self.player.get_equipped_weapon() else 'None'}",
+            f"Equipped armor: {self.player.get_equipped_armor().name if self.player.get_equipped_armor() else 'None'}"
+        ]
+        
+        for i, stat in enumerate(stats):
+            stat_surface = font.render(stat, True, (200, 200, 200))
+            stat_rect = stat_surface.get_rect(center=(750, victory_y + 250 + i * 40))
+            screen.blit(stat_surface, stat_rect)
+        
+        # Draw decorative elements
+        pygame.draw.line(screen, (255, 215, 0), 
+                        (victory_x + 50, victory_y + 140),
+                        (victory_x + victory_width - 50, victory_y + 140), 2)
+        
+        # Draw continue prompt with blinking effect
+        if self.victory_timer > 60:  # Start showing after 1 second
+            if (self.victory_timer // 30) % 2 == 0:  # Blink every half second
+                font = pygame.font.SysFont("Arial", 24)
+                prompt = font.render("Press SPACE to continue...", True, (255, 255, 255))
+                prompt_rect = prompt.get_rect(center=(750, victory_y + victory_height - 50))
+                screen.blit(prompt, prompt_rect)
+
     def _draw_health_bar(self, screen: pygame.Surface, x: int, y: int, 
                         current: int, maximum: int, label: str) -> None:
         # Draw a health bar with label
@@ -176,20 +319,31 @@ class CombatSystem:
         pygame.draw.rect(screen, (255, 255, 255), (x, y + 25, bar_width, bar_height), 2)
     
     def _draw_action_buttons(self, screen: pygame.Surface) -> None:
-        # Draw combat action buttons
+        # Define button dimensions
+        button_width = 200
+        button_height = 60
+        button_spacing = 50
+        
+        # Calculate starting position for first button (centered at bottom of combat box)
+        total_width = (button_width * 3) + (button_spacing * 2)
+        start_x = self.combat_x + (self.combat_width - total_width) // 2
+        button_y = self.combat_y + self.combat_height - 100
+        
         buttons = [
-            ("Attack", (100, 450, 100, 40)),
-            ("Use Item", (220, 450, 100, 40)),
-            ("Run", (340, 450, 100, 40))
+            ("Attack", (start_x, button_y, button_width, button_height)),
+            ("Use Item", (start_x + button_width + button_spacing, button_y, button_width, button_height)),
+            ("Run", (start_x + (button_width + button_spacing) * 2, button_y, button_width, button_height))
         ]
         
         for text, rect in buttons:
-            pygame.draw.rect(screen, (100, 100, 100), rect)
-            pygame.draw.rect(screen, (200, 200, 200), rect, 2)
+            # Draw button background with gradient effect
+            pygame.draw.rect(screen, (80, 80, 80), rect)
+            pygame.draw.rect(screen, (120, 120, 120), rect, 2)
             
-            font = pygame.font.SysFont("Arial", 20)
+            # Draw button text
+            font = pygame.font.SysFont("Arial", 24, bold=True)
             text_surface = font.render(text, True, (255, 255, 255))
-            text_rect = text_surface.get_rect(center=(rect[0] + rect[2]/2, rect[1] + rect[3]/2))
+            text_rect = text_surface.get_rect(center=(rect[0] + rect[2]//2, rect[1] + rect[3]//2))
             screen.blit(text_surface, text_rect)
 
 class Enemy:
