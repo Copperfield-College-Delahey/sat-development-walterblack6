@@ -111,7 +111,13 @@ def create_boss_room(maze):
     boss_y = len(maze) // 2
     maze[boss_y][boss_x] = 5  # Boss tile
     
-    # Add final goal after boss
+    # Add wall after boss that blocks the goal
+    wall_x = boss_x + 2
+    for y in range(len(maze)):
+        if y < len(maze) - 2:  # Match boss room height
+            maze[y][wall_x] = 7  # Special wall that disappears when boss dies
+    
+    # Add final goal after wall
     goal_x = len(maze[0]) - 2
     goal_y = len(maze) // 2
     maze[goal_y][goal_x] = 6  # Final goal tile
@@ -216,13 +222,25 @@ def draw_map(screen, tile_map_param: list[list[int]] | None = None, camera_x: fl
 def can_move(x: int, y:int) -> bool:
     global tile_map
     tile_x = x // TILE_SIZE    #convert pixel x to tile index
-    tile_y = y // TILE_SIZE #convert pixel y to tile index
+    tile_y = y // TILE_SIZE    #convert pixel y to tile index
+    
     # Prevent out-of-bounds movement
     if tile_y < 0 or tile_y >= len(tile_map) or tile_x < 0 or tile_x >= len(tile_map[0]):
         return False
-    # Return False if wall, True otherwise
+        
+    # Get tile type
     tile_type = tile_map[tile_y][tile_x]
-    return tile_type != 1
+    
+    # Handle wall collisions including boss wall
+    if tile_type == 1:  # Regular wall
+        return False
+    elif tile_type == 7:  # Boss wall
+        # Import combat system here to avoid circular import
+        import main
+        if not main.combat_system or not main.combat_system.victory_screen:
+            return False  # Block passage if boss isn't defeated
+    
+    return True  # Allow movement on other tiles
 
 # Get the tile type at a specific position
 def get_tile(x, y):

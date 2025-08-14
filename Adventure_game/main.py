@@ -118,6 +118,43 @@ player.add_item(create_key())
 clock = pygame.time.Clock()
 FPS = 50  # Target frames per second
 
+# global variables in main.py
+ending_screen = False
+ending_timer = 0
+ENDING_DURATION = 180  # 3 seconds at 60 FPS
+
+# Add this function to main.py
+def draw_ending_screen(screen):
+    # Draw semi-transparent dark overlay
+    overlay = pygame.Surface((1500, 1000))
+    overlay.set_alpha(180)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+    
+    # Create ending box
+    ending_width = 800
+    ending_height = 400
+    ending_x = (1500 - ending_width) // 2
+    ending_y = (1000 - ending_height) // 2
+    
+    # Draw ending box with border
+    pygame.draw.rect(screen, (50, 50, 50), (ending_x, ending_y, ending_width, ending_height))
+    pygame.draw.rect(screen, (100, 200, 255), (ending_x, ending_y, ending_width, ending_height), 3)
+    
+    # Draw thank you message
+    font = pygame.font.SysFont("Arial", 48, bold=True)
+    title = font.render("Thank you for saving me!", True, (255, 255, 255))
+    title_rect = title.get_rect(center=(750, ending_y + 100))
+    screen.blit(title, title_rect)
+    
+    # Draw continue prompt with blinking effect
+    if ending_timer > 60:  # Start showing after 1 second
+        if (ending_timer // 30) % 2 == 0:  # Blink every half second
+            font = pygame.font.SysFont("Arial", 24)
+            prompt = font.render("Press SPACE to exit...", True, (200, 200, 200))
+            prompt_rect = prompt.get_rect(center=(750, ending_y + ending_height - 50))
+            screen.blit(prompt, prompt_rect)
+
 # Game loop
 running = True
 while running:
@@ -321,7 +358,7 @@ while running:
     elif tile_under_player == 5:  # Boss
         if combat_system is None:
             # Initialize combat with a boss enemy
-            boss = Enemy("Dungeon Boss", 100, 100)
+            boss = Enemy("Dungeon Boss", 300, 300)
             combat_system = CombatSystem(player, boss)
             combat_system.start_combat()
         
@@ -420,6 +457,27 @@ while running:
         regeneration_timer -= 1
         if regeneration_timer <= 0:
             map_regenerated = False
+
+    # Check tile under player and set message
+    tile_under_player = get_tile(player.rect.centerx, player.rect.centery)
+    
+    if tile_under_player == 7:  # Boss wall
+        if combat_system is None or (combat_system and not combat_system.victory_screen):
+            message = "Defeat the boss to proceed!"
+            draw_textbox(screen, message)
+    elif tile_under_player == 6:  # Goal
+        ending_screen = True
+        ending_timer = 0
+    
+    # Add ending screen handling near the end of the game loop
+    if ending_screen:
+        draw_ending_screen(screen)
+        ending_timer += 1
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and ending_timer > 60:
+            running = False  # Exit the game
+        pygame.display.flip()
+        continue
 
     # Update display
     pygame.display.flip()
