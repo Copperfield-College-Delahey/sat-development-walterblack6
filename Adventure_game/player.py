@@ -14,7 +14,7 @@ def can_move_rect(rect):
     )
 
 def get_current_can_move():
-    """Get the current can_move function that uses the updated map"""
+    #Get the current can_move function that uses the updated map
     from map import can_move
     return can_move
 
@@ -23,7 +23,7 @@ class Player:
         self.rect = pygame.Rect(x, y, 50, 50)
         self.last_update = pygame.time.get_ticks() / 1000.0
         self.colour = (0, 0, 255)
-        self.base_speed = 300  # Pixels per second
+        self.base_speed = 500  # Pixels per second
         
         # Health system
         self.max_health = 100
@@ -186,15 +186,15 @@ class Player:
         self.inventory.load_from_dict(data.get('inventory', {}))
     
     def get_equipped_weapon(self):
-        """Get currently equipped weapon"""
+        #Get currently equipped weapon
         return self.inventory.equipment.get("weapon")
 
     def get_equipped_armor(self):
-        """Get currently equipped armor"""
+        #Get currently equipped armor
         return self.inventory.equipment.get("armor")
 
     def get_total_defense(self):
-        """Calculate total defense including armor"""
+        #Calculate total defense including armor
         base_defense = 0
         armor = self.get_equipped_armor()
         if armor:
