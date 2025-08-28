@@ -461,11 +461,8 @@ while running:
     # Check tile under player and set message
     tile_under_player = get_tile(player.rect.centerx, player.rect.centery)
     
-    if tile_under_player == 7:  # Boss wall
-        if combat_system is None or (combat_system and not combat_system.victory_screen):
-            message = "Defeat the boss to proceed!"
-            draw_textbox(screen, message)
-    elif tile_under_player == 6:  # Goal
+   
+    if tile_under_player == 6:  # Goal
         ending_screen = True
         ending_timer = 0
     
