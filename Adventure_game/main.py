@@ -6,6 +6,7 @@ from npc import NPC
 from button import Button
 from item import create_health_potion, create_sword, create_key, create_armor
 from combat import CombatSystem, Enemy
+from puzzle import MathPuzzle
 
 # Initialize Pygame
 pygame.init()
@@ -103,6 +104,8 @@ space_was_pressed = False   # track previous space state
 chest_message = ""
 chest_message_active = False
 last_e_state = False
+puzzle_active = False
+current_puzzle = None
 
 # Combat system variables
 combat_system = None
@@ -176,6 +179,27 @@ while running:
                     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
                 else:
                     screen = pygame.display.set_mode((WIDTH, HEIGHT))
+            elif puzzle_active and current_puzzle:
+                current_puzzle.handle_input(event)
+                if event.key == pygame.K_RETURN:
+                    if current_puzzle.check_answer():
+                        # Correct answer
+                        from map import get_random_item
+                        item = get_random_item()
+                        success, msg = player.add_item(item)
+                        if success:
+                            chest_message = f"Correct! You found {item.name}!"
+                        else:
+                            chest_message = f"Correct! But your inventory is full."
+                        player_x, player_y = player.rect.centerx // 64, player.rect.centery // 64
+                        mark_chest_opened(player_x, player_y)
+                    else:
+                        # Incorrect answer
+                        chest_message = "Incorrect answer. The chest remains locked."
+                    puzzle_active = False
+                    current_puzzle = None
+                    chest_message_active = True
+
             elif event.key == pygame.K_r and event.mod & pygame.KMOD_CTRL:  # Ctrl+R to regenerate map
                 regenerate_map()
                 
@@ -221,7 +245,7 @@ while running:
                 continue
         
         # Handle player input (including inventory)
-        if not paused and not inventory_open:
+        if not paused and not inventory_open and not puzzle_active:
             player.handle_input(event)
         
         # Handle pause menu button events
@@ -343,18 +367,11 @@ while running:
             else:
                 chest_message = "You found a chest! Press E to open it!"
                 if e_pressed:
-                    # Get a random item from the chest
-                    from map import get_random_item
-                    item = get_random_item()
-                    
-                    success, msg = player.add_item(item)
-                    if success:
-                        chest_message = f"Chest opened! You found {item.name}! ({item.description})"
-                        chest_message_active = True
-                        mark_chest_opened(player_x, player_y)
-                    else:
-                        chest_message = f"{msg}"
-                        chest_message_active = True
+                    #- Trigger the math puzzle
+                    current_puzzle = MathPuzzle()
+                    puzzle_active = True
+                    chest_message = ""
+                    chest_message_active = False
     elif tile_under_player == 5:  # Boss
         if combat_system is None:
             # Initialize combat with a boss enemy
@@ -475,6 +492,9 @@ while running:
             running = False  # Exit the game
         pygame.display.flip()
         continue
+
+    if puzzle_active and current_puzzle:
+        current_puzzle.draw(screen)
 
     # Update display
     pygame.display.flip()
